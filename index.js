@@ -1,8 +1,23 @@
 const express = require('express');
-const sequelize = require('./config/database');
-const Item = require('./models/item');
+const { Sequelize } = require('sequelize');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Configuración de Sequelize
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: 'database.sqlite'
+});
+
+// Definición del modelo Item
+const Item = sequelize.define('Item', {
+  name: {
+    type: Sequelize.STRING,
+    allowNull: false
+  }
+}, {
+  timestamps: true
+});
 
 // Middleware
 app.use(express.json());
