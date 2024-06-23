@@ -1,28 +1,11 @@
 const express = require('express');
-const { Sequelize } = require('sequelize');
+const sequelize = require('./config/database'); // Importa la instancia de Sequelize
+const Item = require('./models/item'); // Importa el modelo Item
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración de Sequelize
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: 'database.sqlite'
-});
-
-// Definición del modelo Item
-const Item = sequelize.define('Item', {
-  name: {
-    type: Sequelize.STRING,
-    allowNull: false
-  }
-}, {
-  timestamps: true
-});
-
-// Middleware
-app.use(express.json());
-
-// Sincronizar con la base de datos
+// Sincroniza los modelos con la base de datos
 sequelize.sync()
   .then(() => {
     console.log('Database synced');
@@ -31,7 +14,10 @@ sequelize.sync()
     console.error('Error syncing database:', err);
   });
 
-// Rutas CRUD
+// Middleware para procesar JSON
+app.use(express.json());
+
+// Ruta para obtener todos los items
 app.get('/items', async (req, res) => {
   try {
     const items = await Item.findAll();
@@ -41,6 +27,7 @@ app.get('/items', async (req, res) => {
   }
 });
 
+// Ruta para crear un nuevo item
 app.post('/items', async (req, res) => {
   try {
     const { name } = req.body;
@@ -51,38 +38,7 @@ app.post('/items', async (req, res) => {
   }
 });
 
-app.put('/items/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name } = req.body;
-    const item = await Item.findByPk(id);
-    if (item) {
-      item.name = name;
-      await item.save();
-      res.json(item);
-    } else {
-      res.status(404).send('Item not found');
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-app.delete('/items/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const item = await Item.findByPk(id);
-    if (item) {
-      await item.destroy();
-      res.send('Item deleted');
-    } else {
-      res.status(404).send('Item not found');
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
+// Inicia el servidor
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
